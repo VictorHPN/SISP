@@ -1,0 +1,26 @@
+@startuml
+title Conversão das Anotações para o Formato YOLO
+
+start
+
+:Listar arquivos .txt no diretório de entrada;
+
+while (Existem arquivos para processar?) is (Sim)
+  :Abrir e ler o próximo arquivo;
+
+  if (Arquivo válido com 7 campos?) then (Sim)
+    if (Classe == 2 (Off)?) then (Sim)
+      :Converter classe para 1 (Stop);
+    else (Não)
+      :Manter classe original;
+    endif
+
+    :Converter coordenadas absolutas para relativas (formato YOLO);
+    :Reescrever o arquivo com nova anotação;
+  else (Não)
+    :Ignorar linha inválida;
+  endif
+endwhile (Não)
+
+stop
+@enduml

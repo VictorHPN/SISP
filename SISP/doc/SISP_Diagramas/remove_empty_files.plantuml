@@ -1,0 +1,19 @@
+@startuml
+title Remoção das Imagens sem Objetos
+
+start
+
+:Listar arquivos .txt no diretório de entrada;
+
+while (Ainda há arquivos .txt?) is (Sim)
+  :Abrir arquivo .txt;
+
+  if (Arquivo está vazio?) then (Sim)
+    :Excluir imagem e anotação correspondente;
+  else (Não)
+    :Manter arquivo;
+  endif
+endwhile (Não)
+
+stop
+@enduml
