@@ -1,0 +1,75 @@
+@startuml
+actor Usuario
+participant GPIO
+participant "Controle de Sessão" as ToggleSession
+
+box #LightGoldenRodYellow
+    participant Armazenamento
+end box
+
+box #LightSkyBlue
+    participant "Thread Camera" as ThreadCamera
+    participant YOLO
+    participant Motor
+end box
+
+box #LightGreen
+    participant "Thread Audio" as ThreadAudio
+end box
+
+participant Camera
+
+Usuario -> GPIO : Pressiona botão
+GPIO ->  ToggleSession: Interrupção
+
+ToggleSession-> Armazenamento : Inicia uma nova sessão
+activate Armazenamento
+
+ToggleSession-> ThreadCamera : Inicia thread de inferência
+activate ThreadCamera
+
+loop Enquanto a sessão esta ativa
+
+    ThreadCamera -> Camera : Requisita captura de imagem
+    activate Camera
+        ThreadCamera <-- Camera : Imagem capturada
+    deactivate Camera
+
+    ThreadCamera -> YOLO : Requisita identificação de semáforos
+    activate YOLO
+    YOLO -> YOLO : Realiza inferências
+    YOLO --> ThreadCamera : Classe e confiança para cada objeto detectado
+    deactivate YOLO
+
+    ThreadCamera -> ThreadCamera : Trata o resultado da inferência
+    ThreadCamera -> ThreadCamera : Atualizada dados da sessão
+
+    ThreadCamera -> Motor : Atualiza feedback tátil
+    activate Motor
+    Motor -> Motor : Atualiza PWM
+
+    ThreadCamera -> ThreadAudio : Atualiza feedback auditivo
+    activate ThreadAudio
+    ThreadAudio -> ThreadAudio : Atualiza arquivo de áudio para tocar
+
+
+    ThreadCamera -> ThreadCamera : Salva imagem com os objetos detectados 
+end
+
+Usuario -> GPIO : Pressiona botão de novo
+GPIO -> ToggleSession: Interrupção
+
+ToggleSession -> ThreadCamera : Encerra thread de inferência
+deactivate ThreadCamera
+
+Armazenamento -> Armazenamento : Gera e salva relatório final
+ToggleSession -> Armazenamento : Encerra a sessão
+deactivate Armazenamento
+
+ToggleSession -> Motor : Interrompe o motor
+deactivate Motor
+
+ToggleSession -> ThreadAudio : Encerra thread de aúdio
+deactivate ThreadAudio
+
+@enduml

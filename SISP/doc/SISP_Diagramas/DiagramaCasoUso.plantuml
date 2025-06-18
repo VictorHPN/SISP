@@ -1,0 +1,23 @@
+@startuml
+left to right direction
+
+actor "Usuário" as Usuario
+
+rectangle "Sistema Embarcado" {
+    usecase "Iniciar sistema" as UC1
+    usecase "Capturar imagem da câmera" as UC2
+    usecase "Realizar inferência YOLO" as UC3
+    usecase "Gerar feedback tátil" as UC4
+    usecase "Gerar feedback auditivo" as UC5
+    usecase "Armazenar resultados" as UC6
+    usecase "Encerrar sistema" as UC7
+}
+
+Usuario --> UC1
+Usuario --> UC7
+UC1 --> UC2
+UC2 --> UC3
+UC3 --> UC4
+UC3 --> UC5
+UC3 --> UC6
+@enduml
