@@ -14,7 +14,7 @@ box "SISP" #LightSkyBlue
     participant "Thread\nDetecção" as TDETECT
     participant YOLO
     participant "Motor" as MT
-    participant "Thread\nAúdio" as TAUD
+    participant "Thread\nÁudio" as TAUD
 end box
 
 USER -> CTRLS : Pressiona\no botão
