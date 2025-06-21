@@ -1,75 +1,56 @@
 @startuml
-actor Usuario
-participant GPIO
-participant "Controle de Sessão" as ToggleSession
+skinparam SequenceArrowThickness 2
+skinparam DefaultFontSize 18
+skinparam ParticipantFontSize 20
+skinparam ActorFontSize 20
+skinparam NoteFontAlignment center
 
-box #LightGoldenRodYellow
-    participant Armazenamento
-end box
+!pragma teoz true
 
-box #LightSkyBlue
-    participant "Thread Camera" as ThreadCamera
+actor "Usuário" as USER
+
+box "SISP" #LightSkyBlue
+    control "Controle de\nSessão" as CTRLS
+    participant "Thread\nDetecção" as TDETECT
     participant YOLO
-    participant Motor
+    participant "Motor" as MT
+    participant "Thread\nAúdio" as TAUD
 end box
 
-box #LightGreen
-    participant "Thread Audio" as ThreadAudio
-end box
+USER -> CTRLS : Pressiona\no botão
+CTRLS -> TDETECT ++: Inicia sessão  
 
-participant Camera
+loop Sessão esta ativa
 
-Usuario -> GPIO : Pressiona botão
-GPIO ->  ToggleSession: Interrupção
+    TDETECT -> TDETECT : Captura imagem\nusando a câmera
 
-ToggleSession-> Armazenamento : Inicia uma nova sessão
-activate Armazenamento
-
-ToggleSession-> ThreadCamera : Inicia thread de inferência
-activate ThreadCamera
-
-loop Enquanto a sessão esta ativa
-
-    ThreadCamera -> Camera : Requisita captura de imagem
-    activate Camera
-        ThreadCamera <-- Camera : Imagem capturada
-    deactivate Camera
-
-    ThreadCamera -> YOLO : Requisita identificação de semáforos
-    activate YOLO
-    YOLO -> YOLO : Realiza inferências
-    YOLO --> ThreadCamera : Classe e confiança para cada objeto detectado
+    TDETECT -> YOLO ++: Imagem
+    YOLO -> YOLO : Detecção de\nsemáforos de\npedestres
+    YOLO --> TDETECT : Classe e confiança\npara cada objeto\ndetectado
     deactivate YOLO
 
-    ThreadCamera -> ThreadCamera : Trata o resultado da inferência
-    ThreadCamera -> ThreadCamera : Atualizada dados da sessão
-
-    ThreadCamera -> Motor : Atualiza feedback tátil
-    activate Motor
-    Motor -> Motor : Atualiza PWM
-
-    ThreadCamera -> ThreadAudio : Atualiza feedback auditivo
-    activate ThreadAudio
-    ThreadAudio -> ThreadAudio : Atualiza arquivo de áudio para tocar
+    hnote over TDETECT : Trata as detecções e\ndecide entre **STOP** e **GO**
 
 
-    ThreadCamera -> ThreadCamera : Salva imagem com os objetos detectados 
+    TDETECT -> MT ++: Estado Inferido
+    & MT -> TAUD ++: Estado Inferido
+
+    MT -> MT: Atualiza\nfeedback\ntátil (PWM)
+    & TAUD -> TAUD : Atualiza\nfeedback\nauditivo
+    & TDETECT -> TDETECT : Atualizada\ndados da\nsessão
+
+    MT --> USER: Vibração
+    TAUD --> USER: Comando verbal
+    TDETECT -> TDETECT : Salva imagem com\nbounding boxes
+
+    USER -> CTRLS : Pressiona\no botão
+    CTRLS -> TDETECT: Encerra sessão
 end
 
-Usuario -> GPIO : Pressiona botão de novo
-GPIO -> ToggleSession: Interrupção
+TDETECT -> TDETECT : Salva relatório\nda sessão
 
-ToggleSession -> ThreadCamera : Encerra thread de inferência
-deactivate ThreadCamera
-
-Armazenamento -> Armazenamento : Gera e salva relatório final
-ToggleSession -> Armazenamento : Encerra a sessão
-deactivate Armazenamento
-
-ToggleSession -> Motor : Interrompe o motor
-deactivate Motor
-
-ToggleSession -> ThreadAudio : Encerra thread de aúdio
-deactivate ThreadAudio
+TDETECT -> MT !!: Desativa o motor
+TDETECT -> TAUD !!: Encerra thread
+CTRLS -> TDETECT !!: Encerra thread
 
 @enduml
